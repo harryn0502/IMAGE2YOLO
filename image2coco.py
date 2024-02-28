@@ -3,16 +3,18 @@ import glob
 import os
 import cv2
 
-MASK_EXT = 'png'
-IMG_EXT = 'jpg'
-
-class ImageToCoco:
-    def __init__(self, category_ids):
-        self.category_ids = category_ids
+class Image2Coco:
+    def __init__(self, img_ext='jpg', mask_ext='png'):
+        self.img_ext = img_ext
+        self.mask_ext = mask_ext
+        self.category_ids = {}
 
     def convert(self, mask_path, json_path):
         # Get COCO format
         coco_format = self._get_coco_format()
+
+        # Create the category_ids
+        self.category_ids = self._create_category_ids(mask_path)
 
         # Set categories to the COCO format
         coco_format["categories"] = self._create_category_annotation()
@@ -21,7 +23,7 @@ class ImageToCoco:
         coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(mask_path)
 
         # Save the COCO JSON to a file
-        with open(json_path, "w") as file:
+        with open(os.path.join(json_path, "_annotations.coco.json"), "w") as file:
             json.dump(coco_format, file, sort_keys=False, indent=4)
 
         # Print the number of annotations created
@@ -36,6 +38,12 @@ class ImageToCoco:
             "images": [{}],
             "annotations": [{}]
         }
+    
+    def _create_category_ids(self, mask_path):
+        category_ids = {}
+        for i, category in enumerate(glob.glob(os.path.join(mask_path, '*'))):
+            category_ids[os.path.basename(category)] = i + 1
+        return category_ids
 
 
     def _create_category_annotation(self):
@@ -60,8 +68,8 @@ class ImageToCoco:
 
         # Get the images and annotations info
         for category in self.category_ids.keys():
-            for mask_image in glob.glob(os.path.join(mask_path, category, f'*.{MASK_EXT}')):
-                original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{IMG_EXT}'
+            for mask_image in glob.glob(os.path.join(mask_path, category, f'*.{self.mask_ext}')):
+                original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{self.img_ext}'
                 mask_image_open = cv2.imread(mask_image)
 
                 # Get the height and width of the mask image
@@ -113,18 +121,13 @@ class ImageToCoco:
 if __name__ == '__main__':
     # Define the paths
     train_mask_path = 'dataset/train/mask/'
-    train_json_path = 'dataset/train/annotations.json'
+    train_image_path = 'dataset/train/images/'
     valid_mask_path = 'dataset/valid/mask/'
-    valid_json_path = 'dataset/valid/annotations.json'
+    valid_image_path = 'dataset/valid/images/'
 
-    # Define the category ids
-    category_ids = {
-        "hand": 1,
-    }
-
-    # Create the ImageToCoco object
-    conveter = ImageToCoco(category_ids)
+    # Create the Image2Coco object
+    conveter = Image2Coco()
 
     # Convert the mask to COCO format
-    conveter.convert(train_mask_path, train_json_path)
-    conveter.convert(valid_mask_path, valid_json_path)
+    conveter.convert(train_mask_path, train_image_path)
+    conveter.convert(valid_mask_path, valid_image_path)
