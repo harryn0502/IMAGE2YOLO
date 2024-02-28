@@ -1,6 +1,5 @@
-# IMAGE2YOLO Converter
-
-This is a simple tool written in Python to convert mask images to YOLO format.
+# IMAGE2YOLO
+Converter for image masks, COCO JSON and YOLO txt annotation formats
 
 ## Prerequisites
 - [python](https://www.python.org/)
