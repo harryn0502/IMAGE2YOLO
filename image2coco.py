@@ -32,8 +32,8 @@ class ImageToCoco:
         return {
             "info": {},
             "licenses": [],
-            "images": [{}],
             "categories": [{}],
+            "images": [{}],
             "annotations": [{}]
         }
 
@@ -44,9 +44,9 @@ class ImageToCoco:
         # Create the category list
         for key, value in self.category_ids.items():
             category = {
-                "supercategory": key,
                 "id": value,
-                "name": key
+                "name": key,
+                "supercategory": key,
             }
             category_list.append(category)
 
@@ -104,22 +104,22 @@ class ImageToCoco:
             "id": annotation_id,
             "image_id": image_id,
             "category_id": category_id,
-            "segmentation": [contour.flatten().tolist()],
-            "area": cv2.contourArea(contour),
             "bbox": cv2.boundingRect(contour),
+            "area": cv2.contourArea(contour),
+            "segmentation": [contour.flatten().tolist()],
             "iscrowd": 0
         }
 
 if __name__ == '__main__':
     # Define the paths
     train_mask_path = 'dataset/train/mask/'
-    train_json_path = 'dataset/train.json'
+    train_json_path = 'dataset/train/annotations.json'
     valid_mask_path = 'dataset/valid/mask/'
-    valid_json_path = 'dataset/valid.json'
+    valid_json_path = 'dataset/valid/annotations.json'
 
     # Define the category ids
     category_ids = {
-        "hand": 0,
+        "hand": 1,
     }
 
     # Create the ImageToCoco object
