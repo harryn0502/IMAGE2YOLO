@@ -2,12 +2,16 @@ import os
 import json
 import yaml
 from ultralytics.data.converter import convert_coco
+from shutil import copy2, copytree, ignore_patterns
 
 class Coco2Yolo:
-    def convert(self, coco_path, yolo_path):
+    def convert(self, coco_path, yolo_path, copy_images=False):
         # Convert COCO to YOLO
         image_path = os.path.join(coco_path)
         convert_coco(image_path, yolo_path, use_segments=True, cls91to80=False)
+
+        if copy_images:
+            copytree(coco_path, os.path.join(yolo_path, 'images'), copy_function=copy2, ignore=ignore_patterns("*.json"),dirs_exist_ok=True) if copy_images else None
 
     def create_yaml(self, coco_path, yolo_path):
         with open(os.path.join(coco_path, '_annotations.coco.json')) as f:
