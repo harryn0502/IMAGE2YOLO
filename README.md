@@ -15,37 +15,31 @@ This is a simple tool written in Python to convert mask images to YOLO format.
 │   │   ├── images/
 │   │   │   ├── 0000.jpg
 │   │   │   ├── 0001.jpg
-│   │   │   ├── 0002.jpg
 │   │   │   ├── ...
 │   │   ├── masks/
 │   │   │   ├── hand/
 │   │   │   │   ├── 0000.png
 │   │   │   │   ├── 0001.png
-│   │   │   │   ├── 0002.png
 │   │   │   │   ├── ...
 │   ├── valid/
 │   │   ├── images/
+│   │   │   ├── 0002.jpg
 │   │   │   ├── 0003.jpg
+│   │   │   ├── ...
+│   │   ├── masks/
+│   │   │   ├── hand/
+│   │   │   │   ├── 0002.png
+│   │   │   │   ├── 0003.png
+│   │   │   │   ├── ...
+│   ├── test/
+│   │   ├── images/
 │   │   │   ├── 0004.jpg
 │   │   │   ├── 0005.jpg
 │   │   │   ├── ...
 │   │   ├── masks/
 │   │   │   ├── hand/
-│   │   │   │   ├── 0003.png
 │   │   │   │   ├── 0004.png
 │   │   │   │   ├── 0005.png
-│   │   │   │   ├── ...
-│   ├── test/
-│   │   ├── images/
-│   │   │   ├── 0006.jpg
-│   │   │   ├── 0007.jpg
-│   │   │   ├── 0008.jpg
-│   │   │   ├── ...
-│   │   ├── masks/
-│   │   │   ├── hand/
-│   │   │   │   ├── 0006.png
-│   │   │   │   ├── 0007.png
-│   │   │   │   ├── 0008.png
 │   │   │   │   ├── ...
 ```
 
@@ -57,19 +51,16 @@ This is a simple tool written in Python to convert mask images to YOLO format.
 │   │   ├── _annotations.coco.json
 │   │   ├── 0000.jpg
 │   │   ├── 0001.jpg
-│   │   ├── 0002.jpg
 │   │   ├── ...
 │   ├── valid/
 │   │   ├── _annotations.coco.json
+│   │   ├── 0002.jpg
 │   │   ├── 0003.jpg
-│   │   ├── 0004.jpg
-│   │   ├── 0005.jpg
 │   │   ├── ...
 │   ├── test/
 │   │   ├── _annotations.coco.json
-│   │   ├── 0006.jpg
-│   │   ├── 0007.jpg
-│   │   ├── 0008.jpg
+│   │   ├── 0004.jpg
+│   │   ├── 0005.jpg
 │   │   ├── ...
 ```
 
@@ -81,37 +72,31 @@ This is a simple tool written in Python to convert mask images to YOLO format.
 │   │   ├── images/
 │   │   │   ├── 0000.jpg
 │   │   │   ├── 0001.jpg
-│   │   │   ├── 0002.jpg
 │   │   │   ├── ...
 │   │   ├── labels/
 │   │   │   ├── _annotations.coco/
 │   │   │   │   ├── 0000.txt
 │   │   │   │   ├── 0001.txt
-│   │   │   │   ├── 0002.txt
 │   │   │   │   ├── ...
 │   ├── valid/
 │   │   ├── images/
+│   │   │   ├── 0002.jpg
 │   │   │   ├── 0003.jpg
+│   │   │   ├── ...
+│   │   ├── labels/
+│   │   │   ├── _annotations.coco/
+│   │   │   │   ├── 0002.txt
+│   │   │   │   ├── 0003.txt
+│   │   │   │   ├── ...
+│   ├── test/
+│   │   ├── images/
 │   │   │   ├── 0004.jpg
 │   │   │   ├── 0005.jpg
 │   │   │   ├── ...
 │   │   ├── labels/
 │   │   │   ├── _annotations.coco/
-│   │   │   │   ├── 0003.txt
 │   │   │   │   ├── 0004.txt
 │   │   │   │   ├── 0005.txt
-│   │   │   │   ├── ...
-│   ├── test/
-│   │   ├── images/
-│   │   │   ├── 0006.jpg
-│   │   │   ├── 0007.jpg
-│   │   │   ├── 0008.jpg
-│   │   │   ├── ...
-│   │   ├── labels/
-│   │   │   ├── _annotations.coco/
-│   │   │   │   ├── 0006.txt
-│   │   │   │   ├── 0007.txt
-│   │   │   │   ├── 0008.txt
 │   │   │   │   ├── ...
 ```
 
