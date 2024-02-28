@@ -10,34 +10,23 @@ class Image2Yolo:
 
     def convert(self, data_path, yolo_path, copy_images=False):
         # Define the paths
-        data_train_path = os.path.join(data_path, 'train')
-        data_valid_path = os.path.join(data_path, 'valid')
-        yolo_train_path = os.path.join(yolo_path, 'train')
-        yolo_valid_path = os.path.join(yolo_path, 'valid')
-        temp_path = os.path.join(yolo_path, 'temp')
-        temp_train_path = os.path.join(temp_path, 'train')
-        temp_valid_path = os.path.join(temp_path, 'valid')
-
-        # Create the Image2Coco object
-        conveter = Image2Coco()
+        path_name = os.path.basename(data_path)
+        yolo_dir = os.path.dirname(yolo_path)
+        temp_dir = os.path.join(yolo_dir, "temp")
+        temp_path = os.path.join(temp_dir, path_name)
 
         # Convert the mask to COCO format into a temporary folder
-        conveter.convert(data_train_path, temp_train_path, copy_images)
-        conveter.convert(data_valid_path, temp_valid_path, copy_images)
-
-        # Create the Coco2Yolo object
-        conveter = Coco2Yolo()
+        self.image2coco.convert(data_path, temp_path, copy_images)
 
         # Convert the COCO format to YOLO format from the temporary folder
-        conveter.convert(temp_train_path, yolo_train_path, copy_images)
-        conveter.convert(temp_valid_path, yolo_valid_path, copy_images)
+        self.coco2yolo.convert(temp_path, yolo_path, copy_images)
 
         # Create the data.yaml file
-        conveter.create_yaml(temp_train_path, yolo_path)
+        self.coco2yolo.create_yaml(temp_path, yolo_dir)
 
         # Remove the temporary files
-        if os.path.exists(temp_path):
-            rmtree(temp_path)
+        if os.path.exists(temp_dir):
+            rmtree(temp_dir)
             
 if __name__ == "__main__":
     # Define the paths
@@ -45,7 +34,10 @@ if __name__ == "__main__":
     yolo_path = 'yolo/'
 
     # Create the Image2Yolo object
-    conveter = Image2Yolo()
+    converter = Image2Yolo()
+
+    paths = ["train", "valid", "test"]
 
     # Convert the mask to Yolo format
-    conveter.convert(data_path, yolo_path, True)
+    for path in paths:
+        converter.convert(os.path.join(data_path, path), os.path.join(yolo_path, path), True)

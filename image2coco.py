@@ -131,14 +131,13 @@ class Image2Coco:
 
 if __name__ == '__main__':
     # Define the paths
-    data_train_path = 'dataset/train/'
-    data_valid_path = 'dataset/valid/'
-    coco_train_path = 'coco/train/'
-    coco_valid_path = 'coco/valid/'
+    data_path = "dataset/"
+    coco_path = "coco/"
+
+    paths = ["train", "valid", "test"]
 
     # Create the Image2Coco object
-    conveter = Image2Coco()
+    converter = Image2Coco()
 
-    # Convert the mask to COCO format
-    conveter.convert(data_train_path, coco_train_path, True)
-    conveter.convert(data_valid_path, coco_valid_path, True)
+    for path in paths:
+        converter.convert(os.path.join(data_path, path), os.path.join(coco_path, path), True)

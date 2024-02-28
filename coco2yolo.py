@@ -38,18 +38,17 @@ class Coco2Yolo:
 
 if __name__ == '__main__':
     # Define the paths
-    train_path = 'coco/train/'
-    valid_path = 'coco/valid/'
+    coco_path = 'coco/'
     yolo_path = 'yolo/'
-    yolo_train_path = yolo_path + 'train/'
-    yolo_valid_path = yolo_path + 'valid/'
 
     # Create the Coco2Yolo object
-    conveter = Coco2Yolo()
+    converter = Coco2Yolo()
+
+    paths = ["train", "valid", "test"]
 
     # Convert the COCO format to YOLO format
-    conveter.convert(train_path, yolo_train_path)
-    conveter.convert(valid_path, yolo_valid_path)
+    for path in paths:
+        converter.convert(os.path.join(coco_path, path), os.path.join(yolo_path, path), True)
 
     # Create the data.yaml file
-    conveter.create_yaml(train_path, yolo_path)
+    converter.create_yaml(os.path.join(coco_path, "train"), yolo_path)
