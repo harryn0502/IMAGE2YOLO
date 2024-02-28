@@ -142,5 +142,5 @@ if __name__ == '__main__':
     conveter = Image2Coco()
 
     # Convert the mask to COCO format
-    conveter.convert(data_train_path, coco_train_path, False)
-    conveter.convert(data_valid_path, coco_valid_path, False)
+    conveter.convert(data_train_path, coco_train_path, True)
+    conveter.convert(data_valid_path, coco_valid_path, True)
