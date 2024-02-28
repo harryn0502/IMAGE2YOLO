@@ -2,8 +2,9 @@
 
 This is a simple tool written in Python to convert mask images to YOLO format.
 
-## Pre-requisites
-- ultralytics
+## Prerequisites
+- [python](https://www.python.org/)
+- [ultralytics](https://github.com/ultralytics/ultralytics)
 
 ## Dataset Directory Structures
 
@@ -98,6 +99,11 @@ This is a simple tool written in Python to convert mask images to YOLO format.
 │   │   │   │   ├── 0004.txt
 │   │   │   │   ├── 0005.txt
 │   │   │   │   ├── ...
+```
+
+## Mask Image to COCO Format
+```bash
+python image2coco.py
 ```
 
 ## COCO to YOLO Format
