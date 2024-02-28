@@ -4,7 +4,6 @@ import os
 import cv2
 
 from shutil import copytree, copy2
-
 class Image2Coco:
     def __init__(self, img_ext='jpg', mask_ext='png'):
         self.img_ext = img_ext
@@ -57,7 +56,6 @@ class Image2Coco:
         for i, category in enumerate(glob.glob(os.path.join(mask_path, '*'))):
             category_ids[os.path.basename(category)] = i + 1
         return category_ids
-
 
     def _create_category_annotation(self):
         category_list = []
