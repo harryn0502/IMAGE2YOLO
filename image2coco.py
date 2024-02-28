@@ -3,13 +3,19 @@ import glob
 import os
 import cv2
 
+from shutil import copytree, copy2
+
 class Image2Coco:
     def __init__(self, img_ext='jpg', mask_ext='png'):
         self.img_ext = img_ext
         self.mask_ext = mask_ext
         self.category_ids = {}
 
-    def convert(self, mask_path, json_path):
+    def convert(self, data_path, coco_path, copy_images=False):
+        mask_path = os.path.join(data_path, 'mask')
+        coco_images_path = coco_path
+        if data_path == coco_path:
+            coco_images_path = os.path.join(coco_path, 'images')
         # Get COCO format
         coco_format = self._get_coco_format()
 
@@ -22,8 +28,15 @@ class Image2Coco:
         # Get "images" and "annotations" info
         coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(mask_path)
 
+        # Create coco image folder
+        if not os.path.exists(coco_images_path):
+            os.makedirs(coco_images_path)
+        
+        if data_path != coco_path and copy_images:
+            copytree(os.path.join(data_path, 'images'), coco_images_path, copy_function=copy2, dirs_exist_ok=True) if copy_images else None
+
         # Save the COCO JSON to a file
-        with open(os.path.join(json_path, "_annotations.coco.json"), "w") as file:
+        with open(os.path.join(coco_images_path, "_annotations.coco.json"), "w") as file:
             json.dump(coco_format, file, sort_keys=False, indent=4)
 
         # Print the number of annotations created
@@ -120,14 +133,14 @@ class Image2Coco:
 
 if __name__ == '__main__':
     # Define the paths
-    train_mask_path = 'dataset/train/mask/'
-    train_image_path = 'dataset/train/images/'
-    valid_mask_path = 'dataset/valid/mask/'
-    valid_image_path = 'dataset/valid/images/'
+    data_train_path = 'dataset/train/'
+    data_valid_path = 'dataset/valid/'
+    coco_train_path = 'coco/train/'
+    coco_valid_path = 'coco/valid/'
 
     # Create the Image2Coco object
     conveter = Image2Coco()
 
     # Convert the mask to COCO format
-    conveter.convert(train_mask_path, train_image_path)
-    conveter.convert(valid_mask_path, valid_image_path)
+    conveter.convert(data_train_path, coco_train_path, False)
+    conveter.convert(data_valid_path, coco_valid_path, False)
