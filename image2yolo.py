@@ -8,7 +8,7 @@ class Image2Yolo:
         self.image2coco = Image2Coco()
         self.coco2yolo = Coco2Yolo()
 
-    def convert(self, data_path, yolo_path, copy_images=False):
+    def convert(self, data_path, yolo_path, copy_images=False, depth_map=False):
         # Define the paths
         path_name = os.path.basename(data_path)
         yolo_dir = os.path.dirname(yolo_path)
@@ -16,7 +16,7 @@ class Image2Yolo:
         temp_path = os.path.join(temp_dir, path_name)
 
         # Convert the mask to COCO format into a temporary folder
-        self.image2coco.convert(data_path, temp_path, copy_images)
+        self.image2coco.convert(data_path, temp_path, copy_images, depth_map)
 
         # Convert the COCO format to YOLO format from the temporary folder
         self.coco2yolo.convert(temp_path, yolo_path, copy_images)
@@ -40,4 +40,4 @@ if __name__ == "__main__":
 
     # Convert the mask to Yolo format
     for path in paths:
-        converter.convert(os.path.join(data_path, path), os.path.join(yolo_path, path), True)
+        converter.convert(os.path.join(data_path, path), os.path.join(yolo_path, path), copy_images=True, depth_map=True)

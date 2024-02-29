@@ -10,7 +10,7 @@ class Image2Coco:
         self.mask_ext = mask_ext
         self.category_ids = {}
 
-    def convert(self, data_path, coco_path, copy_images=False):
+    def convert(self, data_path, coco_path, copy_images=False, depth_map=False):
         mask_path = os.path.join(data_path, 'mask')
         coco_images_path = coco_path
         if data_path == coco_path:
@@ -25,7 +25,7 @@ class Image2Coco:
         coco_format["categories"] = self._create_category_annotation()
 
         # Get "images" and "annotations" info
-        coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(mask_path)
+        coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(mask_path, depth_map)
 
         # Create coco image folder
         if not os.path.exists(coco_images_path):
@@ -71,7 +71,7 @@ class Image2Coco:
 
         return category_list
     
-    def _images_annotations_info(self, mask_path):
+    def _images_annotations_info(self, mask_path, depth_map=False):
         image_id = 0
         annotation_id = 0
         annotations = []
@@ -95,7 +95,7 @@ class Image2Coco:
                     image = [element for element in images if element['file_name'] == original_file_name][0]
 
                 # Find the contours in the mask image
-                contours = self._find_contours(mask_image_open)
+                contours = self._find_contours(mask_image_open, depth_map)
 
                 for contour in contours:
                     annotation = self._create_annotation_format(annotation_id, image["id"], self.category_ids[category], contour)
@@ -113,9 +113,11 @@ class Image2Coco:
             "file_name": file_name,
         }
     
-    def _find_contours(self, mask):
+    def _find_contours(self, mask, depth_map=False):
         gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        if depth_map:
+            _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
         return cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]
 
     def _create_annotation_format(self, annotation_id, image_id, category_id, contour):
