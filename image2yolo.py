@@ -4,8 +4,8 @@ from coco2yolo import Coco2Yolo
 from shutil import rmtree
 
 class Image2Yolo:
-    def __init__(self):
-        self.image2coco = Image2Coco()
+    def __init__(self, img_ext="jpg", mask_ext="png"):
+        self.image2coco = Image2Coco(img_ext, mask_ext)
         self.coco2yolo = Coco2Yolo()
 
     def convert(self, data_path, yolo_path, copy_images=False, depth_map=False):
