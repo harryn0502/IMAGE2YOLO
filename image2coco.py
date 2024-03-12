@@ -5,7 +5,7 @@ import cv2
 from shutil import copy
 
 class Image2Coco:
-    def __init__(self, img_ext='jpg', mask_ext='png', area_threshold=0):
+    def __init__(self, img_ext='jpg', mask_ext='png', area_threshold=100):
         self.img_ext = img_ext
         self.mask_ext = mask_ext
         self.area_threshold = area_threshold
@@ -140,13 +140,13 @@ class Image2Coco:
 
 if __name__ == '__main__':
     # Define the paths
-    data_path = "data/"
+    data_path = "dataset/"
     coco_path = "coco/"
 
-    paths = ["train"]
+    paths = ["train", "valid", "test"]
 
     # Create the Image2Coco object
-    converter = Image2Coco(mask_ext="jpg", area_threshold=100)
+    converter = Image2Coco()
 
     for path in paths:
         converter.convert(os.path.join(data_path, path), os.path.join(coco_path, path), True)
