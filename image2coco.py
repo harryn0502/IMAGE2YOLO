@@ -6,28 +6,42 @@ from shutil import copy
 
 class Image2Coco:
     def __init__(self, img_ext='jpg', mask_ext='png', area_threshold=100):
-        self.img_ext = img_ext
-        self.mask_ext = mask_ext
-        self.area_threshold = area_threshold
-        self.category_ids = {}
-        self.image_id = 0
+        self._img_ext = img_ext
+        self._mask_ext = mask_ext
+        self._area_threshold = area_threshold
+        self._category_ids = {}
+        self._image_id = 0
 
-    def convert(self, data_path, coco_path, copy_images=False, depth_map=False):
-        mask_path = os.path.join(data_path, 'mask')
+    def set_area_threshold(self, area_threshold):
+        self._area_threshold = area_threshold
+
+    def set_img_ext(self, img_ext):
+        self._img_ext = img_ext
+
+    def set_mask_ext(self, mask_ext):
+        self._mask_ext = mask_ext
+
+
+    def convert(self, image_path, mask_path, coco_path, copy_images=False, depth_map=False):
         coco_images_path = coco_path
-        if data_path == coco_path:
+        if image_path == coco_path:
             coco_images_path = os.path.join(coco_path, 'images')
+
+        # Create coco image folder
+        if not os.path.exists(coco_images_path):
+            os.makedirs(coco_images_path)
+
         # Get COCO format
         coco_format = self._get_coco_format()
 
         # Create the category_ids
-        self.category_ids = self._create_category_ids(mask_path)
+        self._category_ids = self._create_category_ids(mask_path)
 
         # Set categories to the COCO format
         coco_format["categories"] = self._create_category_annotation()
 
         # Get "images" and "annotations" info
-        coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(data_path, coco_images_path, copy_images, mask_path, depth_map)
+        coco_format["images"], coco_format["annotations"], count = self._images_annotations_info(image_path, coco_images_path, copy_images, mask_path, depth_map)
 
         # Save the COCO JSON to a file
         with open(os.path.join(coco_images_path, "_annotations.coco.json"), "w") as file:
@@ -58,7 +72,7 @@ class Image2Coco:
         category_list = []
 
         # Create the category list
-        for key, value in self.category_ids.items():
+        for key, value in self._category_ids.items():
             category = {
                 "id": value,
                 "name": key,
@@ -68,45 +82,42 @@ class Image2Coco:
 
         return category_list
     
-    def _images_annotations_info(self, data_path, coco_images_path, copy_images, mask_path, depth_map=False):
+    def _images_annotations_info(self, image_path, coco_images_path, copy_images, mask_path, depth_map=False):
         annotation_id = 0
         annotations = []
         images = []
 
         # Get the images and annotations info
-        for category in self.category_ids.keys():
-            for mask_image in glob.glob(os.path.join(mask_path, category, f'*.{self.mask_ext}')):
-                if (self.image_id == 30):
-                    break
-                original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{self.img_ext}'
+        for category in self._category_ids.keys():
+            for mask_image in glob.glob(os.path.join(mask_path, category, f'*.{self._mask_ext}')):
+                # Get the original file name and the new file name
+                original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{self._img_ext}'
+                new_file_name = f'{self._image_id}.{self._img_ext}'
 
-                # Create coco image folder
-                if not os.path.exists(coco_images_path):
-                    os.makedirs(coco_images_path)
-                
-                if data_path != coco_path and copy_images:
-                    copy(os.path.join(data_path, 'images', original_file_name), os.path.join(coco_images_path, f'{self.image_id}.{self.img_ext}')) if copy_images else None
+                # Copy the images to the COCO images folder
+                if image_path != coco_path and copy_images:
+                    copy(os.path.join(image_path, original_file_name), os.path.join(coco_images_path, new_file_name)) if copy_images else None
 
-
+                # Open the mask image
                 mask_image_open = cv2.imread(mask_image)
 
                 # Get the height and width of the mask image
                 height, width, _ = mask_image_open.shape
 
                 # Create the images info
-                if self.image_id not in map(lambda img: img['file_name'], images):
-                    image = self._create_image_annotation(self.image_id, width, height, f'{self.image_id}.{self.img_ext}')
+                if self._image_id not in map(lambda img: img['file_name'], images):
+                    image = self._create_image_annotation(self._image_id, width, height, new_file_name)
                     images.append(image)
-                    self.image_id += 1
+                    self._image_id += 1
                 else:
-                    image = [element for element in images if element['file_name'] == self.image_id][0]
+                    image = [element for element in images if element['file_name'] == self._image_id][0]
 
                 # Find the contours in the mask image
                 contours = self._find_contours(mask_image_open, depth_map)
 
                 for contour in contours:
-                    annotation = self._create_annotation_format(annotation_id, image["id"], self.category_ids[category], contour)
-                    if annotation["area"] > self.area_threshold:
+                    annotation = self._create_annotation_format(annotation_id, image["id"], self._category_ids[category], contour)
+                    if annotation["area"] > self._area_threshold:
                         annotations.append(annotation)
                         annotation_id += 1
 
@@ -144,9 +155,14 @@ if __name__ == '__main__':
     coco_path = "coco/"
 
     paths = ["train", "valid", "test"]
+    sub_paths = ["images", "mask"]
 
     # Create the Image2Coco object
     converter = Image2Coco()
 
+    # Convert the dataset to COCO format
     for path in paths:
-        converter.convert(os.path.join(data_path, path), os.path.join(coco_path, path), True)
+        image_path = os.path.join(data_path, path, sub_paths[0])
+        mask_path = os.path.join(data_path, path, sub_paths[1])
+        out_path = os.path.join(coco_path, path)
+        converter.convert(image_path, mask_path, out_path, True)
