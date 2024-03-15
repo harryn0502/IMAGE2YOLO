@@ -13,7 +13,6 @@ class Image2Coco:
         self.depth_map = depth_map
         self.data_limit = data_limit
         self.coco_format = self._get_coco_format()
-        self.annotation_loaded = False
 
     def set_area_threshold(self, area_threshold):
         self._area_threshold = area_threshold
@@ -30,10 +29,12 @@ class Image2Coco:
     def set_depth_map(self, depth_map):
         self.depth_map = depth_map
 
+    def set_data_limit(self, data_limit):
+        self.data_limit = data_limit
+
     def load_annotations(self, annotation_path):
         with open(annotation_path, 'r') as file:
             self.coco_format = json.load(file)
-        self.annotation_loaded = True
 
     def _get_max_image_id(self):
         if self.coco_format['images'] == []:
@@ -59,7 +60,7 @@ class Image2Coco:
         self._add_category_annotation(category)
 
         # # Get "images" and "annotations" info
-        self._add_images_annotations_info(image_path, out_path, mask_path, category)
+        self._add_images_annotations_info(image_path, out_path, mask_path)
 
     def save(self, out_path):
         # Save the COCO JSON to a file
@@ -92,11 +93,10 @@ class Image2Coco:
         # Add the category to the COCO format
         self.coco_format["categories"].append(category)
     
-    def _add_images_annotations_info(self, image_path, out_path, mask_path, category):
+    def _add_images_annotations_info(self, image_path, out_path, mask_path):
         # Get the images and annotations info
-        count = 0
         for mask_image in glob.glob(os.path.join(mask_path, f'*.{self._mask_ext}')):
-            if self.data_limit != -1 and count == self.data_limit:
+            if self.data_limit != -1 and self._get_max_image_id() + 1 == self.data_limit:
                 break
             # Get the original file name and the new file name
             original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{self._img_ext}'
@@ -126,7 +126,6 @@ class Image2Coco:
                 annotation = self._add_annotation(image["id"], self._get_max_category_id(), contour)
                 if annotation["area"] > self._area_threshold:
                     self.coco_format["annotations"].append(annotation)
-            count += 1
 
     def _add_image_annotation(self, width, height, file_name):
         return {
