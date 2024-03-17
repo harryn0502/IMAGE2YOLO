@@ -26,7 +26,7 @@ paths = ["train"]
 sub_paths = ["images", "mask"]
 
 # Create the Image2Coco object
-converter = Image2Coco()
+converter = Image2Coco(area_threshold=10)
 
 # Convert the dataset to COCO format
 for path in paths:
