@@ -2,6 +2,8 @@ import json
 import glob
 import os
 import cv2
+import numpy as np
+from PIL import Image
 from shutil import copy
 
 class Image2Coco:
@@ -51,7 +53,7 @@ class Image2Coco:
             return -1
         return max([cat['id'] for cat in self.coco_format['categories']])
 
-    def convert(self, image_path, mask_path, out_path, category=""):
+    def binary_convert(self, image_path, mask_path, out_path, category=""):
         # Create output path folder
         if not os.path.exists(out_path):
             os.makedirs(out_path)
@@ -61,6 +63,18 @@ class Image2Coco:
 
         # # Get "images" and "annotations" info
         self._add_images_annotations_info(image_path, out_path, mask_path)
+
+    def multi_convert(self, image_path, mask_path, out_path, category_ids, category_colours):
+        # # Create output path folder
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
+        # Set categories to the COCO format
+        for category in category_ids.keys():
+            self._add_category_annotation(category, category_ids[category])
+
+        # Get "images" and "annotations" info
+        self._add_multi_images_annotations_info(image_path, out_path, mask_path, category_colours)
 
     def save(self, out_path):
         # Save the COCO JSON to a file
@@ -82,13 +96,15 @@ class Image2Coco:
             "annotations": []
         }
 
-    def _add_category_annotation(self, key):
+    def _add_category_annotation(self, key, id=-1):
         # Create the category list
         category = {
             "id": self._get_max_category_id() + 1,
             "name": key,
             "supercategory": key,
         }
+        if id > -1:
+            category["id"] = id
 
         # Add the category to the COCO format
         self.coco_format["categories"].append(category)
@@ -127,6 +143,46 @@ class Image2Coco:
                 if annotation["area"] > self._area_threshold:
                     self.coco_format["annotations"].append(annotation)
 
+    def _add_multi_images_annotations_info(self, image_path, out_path, mask_path, category_colours):
+        # Get the images and annotations info
+        for mask_image in glob.glob(os.path.join(mask_path, f'*.{self._mask_ext}')):
+            if self.data_limit != -1 and self._get_max_image_id() + 1 == self.data_limit:
+                break
+            # Get the original file name and the new file name
+            original_file_name = f'{os.path.basename(mask_image).split(".")[0]}.{self._img_ext}'
+            new_file_name = f'{self._get_max_image_id() + 1}.{self._img_ext}'
+
+            # Copy the images to the COCO images folder
+            if not self.only_annotations:
+                copy(os.path.join(image_path, original_file_name), os.path.join(out_path, new_file_name))
+
+            # Open the mask image
+            mask_image_open = Image.open(mask_image).convert("RGB")
+
+            # Get the height and width of the mask image
+            width, height = mask_image_open.size
+
+            # Create the images info
+            if new_file_name not in map(lambda img: img['file_name'], self.coco_format['images']):
+                image = self._add_image_annotation(width, height, new_file_name)
+                self.coco_format["images"].append(image)
+            else:
+                image = [element for element in self.coco_format["images"] if element['file_name'] == new_file_name][0]
+
+            # Create sub masks
+            sub_masks = self._create_sub_masks(mask_image_open, width, height)
+
+            for mask_name in sub_masks.keys():
+                sub_maks = sub_masks[mask_name].convert("RGB")
+                numpy_image = np.array(sub_maks)
+                opencv_image = cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR)
+                contours = self._find_contours(opencv_image)
+
+                for contour in contours:
+                    annotation = self._add_annotation(image["id"], category_colours[mask_name], contour)
+                    if annotation["area"] > self._area_threshold:
+                        self.coco_format["annotations"].append(annotation)
+
     def _add_image_annotation(self, width, height, file_name):
         return {
             "id": self._get_max_image_id() + 1,
@@ -152,6 +208,33 @@ class Image2Coco:
             "segmentation": [contour.flatten().tolist()],
             "iscrowd": 0
         }
+    
+    def _create_sub_masks(self, mask_image_open, width, height):
+        # Initialize a dictionary of sub-masks
+        sub_masks = {}
+
+        # Loop over the width and height of the mask image
+        for x in range(width):
+            for y in range(height):
+                # Get the rgb value of the pixel
+                pixel = mask_image_open.getpixel((x,y))[:3]
+
+                # If the pixel is not a background
+                if pixel != (255, 0, 0):
+                    # Check to see if we've created a sub-mask...
+                    pixel_str = str(pixel)
+                    sub_mask = sub_masks.get(pixel_str, None)
+
+                    # If a sub-mask does not exist, create a new sub-mask
+                    if sub_mask is None:
+                        # Create a sub-mask (one bit per pixel) and add to the dictionary
+                        sub_masks[pixel_str] = Image.new("1", (width + 2, height + 2))
+
+                    # Set the pixel value to 1
+                    sub_masks[pixel_str].putpixel((x + 1, y + 1), 1)
+
+        # Return the sub-masks
+        return sub_masks
 
 if __name__ == '__main__':
     # Define the paths
@@ -169,5 +252,35 @@ if __name__ == '__main__':
         image_path = os.path.join(data_path, path, sub_paths[0])
         mask_path = os.path.join(data_path, path, sub_paths[1])
         out_path = os.path.join(coco_path, path)
-        converter.convert(image_path, mask_path, out_path, "hand")
+        converter.binary_convert(image_path, mask_path, out_path, "hand")
         converter.save(out_path)
+
+    # # Multi class example
+    # # Define the paths
+    # data_path = "example/"
+    # coco_path = "coco/"
+
+    # category_ids = {
+    #     "left": 0,
+    #     "right": 1,
+    # }
+
+    # category_colours = {
+    #     "(0, 0, 255)": 0,
+    #     "(0, 255, 0)": 1
+    # }
+
+    # paths = ["train"]
+    # sub_paths = ["images", "mask"]
+
+    # # Create the Image2Coco object
+    # converter = Image2Coco()
+
+    # # Convert the dataset to COCO format
+    # for path in paths:
+    #     image_path = os.path.join(data_path, path, sub_paths[0])
+    #     mask_path = os.path.join(data_path, path, sub_paths[1])
+    #     out_path = os.path.join(coco_path, path)
+    #     # converter.binary_convert(image_path, mask_path, out_path, "hand")
+    #     converter.multi_convert(image_path, mask_path, out_path, category_ids, category_colours)
+    #     converter.save(out_path)
