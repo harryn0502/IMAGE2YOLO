@@ -20,6 +20,8 @@ category_colours = {
     "(0, 255, 0)": 1
 }
 
+ignore_colours = ["(255, 0, 0)"]
+
 paths = ["train"]
 sub_paths = ["images", "mask"]
 
@@ -31,5 +33,5 @@ for path in paths:
     image_path = os.path.join(data_path, path, sub_paths[0])
     mask_path = os.path.join(data_path, path, sub_paths[1])
     out_path = os.path.join(coco_path, path)
-    converter.multi_convert(image_path, mask_path, out_path, category_ids, category_colours)
+    converter.multi_convert(image_path, mask_path, out_path, category_ids, category_colours, ignore_colours)
     converter.save(out_path)

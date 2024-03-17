@@ -11,6 +11,7 @@ class Image2Coco:
         self._img_ext = img_ext
         self._mask_ext = mask_ext
         self._area_threshold = area_threshold
+        self._load_annotation = False
         self.only_annotations = only_annotations
         self.depth_map = depth_map
         self.data_limit = data_limit
@@ -37,6 +38,7 @@ class Image2Coco:
     def load_annotations(self, annotation_path):
         with open(annotation_path, 'r') as file:
             self.coco_format = json.load(file)
+        self._load_annotation = True
 
     def _get_max_image_id(self):
         if self.coco_format['images'] == []:
@@ -59,22 +61,24 @@ class Image2Coco:
             os.makedirs(out_path)
 
         # Set categories to the COCO format
-        self._add_category_annotation(category)
+        if not self._load_annotation:
+            self._add_category_annotation(category)
 
         # # Get "images" and "annotations" info
         self._add_images_annotations_info(image_path, out_path, mask_path)
 
-    def multi_convert(self, image_path, mask_path, out_path, category_ids, category_colours):
+    def multi_convert(self, image_path, mask_path, out_path, category_ids, category_colours, ignore_colours = []):
         # # Create output path folder
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
         # Set categories to the COCO format
-        for category in category_ids.keys():
-            self._add_category_annotation(category, category_ids[category])
+        if not self._load_annotation:
+            for category in category_ids.keys():
+                self._add_category_annotation(category, category_ids[category])
 
         # Get "images" and "annotations" info
-        self._add_multi_images_annotations_info(image_path, out_path, mask_path, category_colours)
+        self._add_multi_images_annotations_info(image_path, out_path, mask_path, category_colours, ignore_colours)
 
     def save(self, out_path):
         # Save the COCO JSON to a file
@@ -143,7 +147,7 @@ class Image2Coco:
                 if annotation["area"] > self._area_threshold:
                     self.coco_format["annotations"].append(annotation)
 
-    def _add_multi_images_annotations_info(self, image_path, out_path, mask_path, category_colours):
+    def _add_multi_images_annotations_info(self, image_path, out_path, mask_path, category_colours, ignore_colours):
         # Get the images and annotations info
         for mask_image in glob.glob(os.path.join(mask_path, f'*.{self._mask_ext}')):
             if self.data_limit != -1 and self._get_max_image_id() + 1 == self.data_limit:
@@ -170,7 +174,7 @@ class Image2Coco:
                 image = [element for element in self.coco_format["images"] if element['file_name'] == new_file_name][0]
 
             # Create sub masks
-            sub_masks = self._create_sub_masks(mask_image_open, width, height)
+            sub_masks = self._create_sub_masks(mask_image_open, width, height, ignore_colours)
 
             for mask_name in sub_masks.keys():
                 sub_maks = sub_masks[mask_name].convert("RGB")
@@ -209,7 +213,7 @@ class Image2Coco:
             "iscrowd": 0
         }
     
-    def _create_sub_masks(self, mask_image_open, width, height):
+    def _create_sub_masks(self, mask_image_open, width, height, ignore_colours):
         # Initialize a dictionary of sub-masks
         sub_masks = {}
 
@@ -218,11 +222,11 @@ class Image2Coco:
             for y in range(height):
                 # Get the rgb value of the pixel
                 pixel = mask_image_open.getpixel((x,y))[:3]
+                pixel_str = str(pixel)
 
                 # If the pixel is not a background
-                if pixel != (255, 0, 0):
+                if pixel_str not in ignore_colours:
                     # Check to see if we've created a sub-mask...
-                    pixel_str = str(pixel)
                     sub_mask = sub_masks.get(pixel_str, None)
 
                     # If a sub-mask does not exist, create a new sub-mask
